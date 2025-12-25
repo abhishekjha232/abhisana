@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merry Christmas Aparajita!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; overflow-x: hidden; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        @keyframes snowfall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        .snowflake {
+            position: fixed; top: -20px; color: rgba(255, 255, 255, 0.2);
+            pointer-events: none; z-index: 0; animation: snowfall linear infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.5); }
+        }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="snow-container"></div>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex flex-col items-center justify-center p-6 text-center z-10">
+        <div class="mb-8 animate-float">
+            <span style="font-size: 80px; filter: drop-shadow(0 0 15px rgba(250,204,21,0.8))">⭐</span>
+        </div>
+        <h1 class="text-4xl md:text-7xl font-serif font-bold mb-4 bg-gradient-to-r from-red-400 via-white to-emerald-400 bg-clip-text text-transparent px-4">
+            Merry Christmas, Witchh! 🎄
+        </h1>
+        <p class="text-xl md:text-2xl text-slate-300 max-w-lg mx-auto font-light tracking-wide px-4">
+            A special surprise from the world's most handsome young man.
+        </p>
+        <div class="mt-12 animate-bounce opacity-30 text-3xl">↓</div>
+    </section>
+
+    <!-- Gift Section -->
+    <section class="py-24 px-6 relative z-10 bg-slate-800/50 backdrop-blur-sm border-y border-white/5">
+        <div class="max-w-4xl mx-auto text-center">
+            <div id="gift-box" class="group cursor-pointer">
+                <div class="relative inline-block transition-transform duration-500 hover:scale-110">
+                    <div class="w-32 h-32 text-red-500 animate-pulse-glow rounded-2xl p-4 bg-white/5 flex items-center justify-center" style="font-size: 64px;">🎁</div>
+                    <div class="absolute -top-4 -right-4 bg-yellow-400 text-slate-900 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-tighter">
+                        Aparajita, Open Me
+                    </div>
+                </div>
+                <p class="mt-8 text-slate-400 italic">"I have a secret letter for you..."</p>
+            </div>
+
+            <div id="letter-content" class="hidden space-y-12">
+                <div class="bg-white text-slate-900 p-8 md:p-12 rounded-3xl shadow-2xl relative overflow-hidden text-left border-4 border-red-500">
+                    <h2 class="text-3xl font-serif font-bold text-red-600 mb-6 border-b border-red-100 pb-4">
+                        Dearest APARAJITAA (witchh 🧙‍♀️)
+                    </h2>
+                    <div class="space-y-4 text-lg leading-relaxed text-slate-700 font-medium">
+                        <p>Merry Christmas to my favorite witch, Aparajita!</p>
+                        <p>This year, the best gift I have isn't under the tree—it's right here (well, probably bullying me through a text message right now).</p>
+                        <p>I still laugh thinking about our first 'proposal' moment. I knew I loved you, and I knew you loved me too, you just needed a little... aggressive encouragement to say it out loud! Seeing you finally admit your feelings is a memory I'll treasure forever.</p>
+                        <p>Thank you for being the person who keeps me on my toes, for the endless bullying that I secretly enjoy because it's from you, and for choosing to be with the "most handsome young man" in the world.</p>
+                        <p>You make my life magical, even if you are a bit of a witch. I love you more than words can say (and definitely more than you'll admit to me today).</p>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-slate-100 text-right">
+                        <p class="text-slate-500 italic">With all the love in the world,</p>
+                        <p class="text-2xl font-serif font-bold text-red-600">ABHISHEK JHAA (the most handsome young mann 😎)</p>
+                    </div>
+                </div>
+
+                <!-- Memory Lane -->
+                <div class="mt-16">
+                    <h3 class="text-2xl font-bold mb-8">Our Chaotic Memories</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-slate-900/80 p-6 rounded-2xl border border-white/10 hover:border-emerald-500/50 transition-all">
+                            <div class="text-3xl mb-4">⚡</div>
+                            <h4 class="text-lg font-bold mb-2 text-emerald-400">The Great Proposal</h4>
+                            <p class="text-sm text-slate-400 italic">When I finally said 'I Love You' and essentially held you hostage until you admitted your feelings aloud.</p>
+                        </div>
+                        <div class="bg-slate-900/80 p-6 rounded-2xl border border-white/10 hover:border-emerald-500/50 transition-all">
+                            <div class="text-3xl mb-4">👻</div>
+                            <h4 class="text-lg font-bold mb-2 text-emerald-400">Your Professional Hobby</h4>
+                            <p class="text-sm text-slate-400 italic">Bullying me 24/7. making fun of my hair, my jokes, or just my general existence. I'm your favorite punching bag!</p>
+                        </div>
+                        <div class="bg-slate-900/80 p-6 rounded-2xl border border-white/10 hover:border-emerald-500/50 transition-all">
+                            <div class="text-3xl mb-4">❤️</div>
+                            <h4 class="text-lg font-bold mb-2 text-emerald-400">The 'Witch' & Her Man</h4>
+                            <p class="text-sm text-slate-400 italic">You're the only one I want to be annoyed by for the rest of my life. You're my favorite kind of chaos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Music Player UI -->
+    <section class="py-24 px-6 z-10">
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-3xl p-8 border border-white/10 shadow-xl">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <div id="record-icon" class="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center text-2xl">🎵</div>
+                        <div>
+                            <h3 class="text-xl font-bold">Witchy Tunes</h3>
+                            <p class="text-sm text-slate-400">Curated by your favorite victim</p>
+                        </div>
+                    </div>
+                    <button id="play-btn" class="w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-xl">▶️</button>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
+                        <p class="font-medium">All I Want for Christmas Is You</p>
+                        <span class="text-xs text-slate-500">Mariah Carey</span>
+                    </div>
+                    <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
+                        <p class="font-medium">Perfect</p>
+                        <span class="text-xs text-slate-500">Ed Sheeran</span>
+                    </div>
+                    <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
+                        <p class="font-medium">Lover</p>
+                        <span class="text-xs text-slate-500">Taylor Swift</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-12 text-center text-slate-500 border-t border-white/5 bg-slate-950/50">
+        <p class="text-sm uppercase tracking-widest font-bold text-slate-400">Created for APARAJITAA</p>
+        <p class="mt-2 opacity-50">Since the day the 'witch' cast her spell</p>
+    </footer>
+
+    <script>
+        // Snow Logic
+        const container = document.getElementById('snow-container');
+        for (let i = 0; i < 50; i++) {
+            const flake = document.createElement('div');
+            flake.className = 'snowflake';
+            flake.innerHTML = '❄️';
+            flake.style.left = Math.random() * 100 + '%';
+            flake.style.animationDuration = (Math.random() * 5 + 5) + 's';
+            flake.style.animationDelay = Math.random() * 5 + 's';
+            flake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+            container.appendChild(flake);
+        }
+
+        // Interaction Logic
+        document.getElementById('gift-box').onclick = function() {
+            this.classList.add('hidden');
+            document.getElementById('letter-content').classList.remove('hidden');
+            window.scrollTo({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+        };
+
+        let isPlaying = false;
+        document.getElementById('play-btn').onclick = function() {
+            isPlaying = !isPlaying;
+            this.innerText = isPlaying ? '⏸️' : '▶️';
+            document.getElementById('record-icon').style.animation = isPlaying ? 'spin 3s linear infinite' : 'none';
+        };
+    </script>
+    <style>
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</body>
+</html>
