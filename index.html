@@ -1,553 +1,222 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  onSnapshot, 
-  collection, 
-  addDoc, 
-  serverTimestamp 
-} from 'firebase/firestore';
-import { 
-  getAuth, 
-  signInAnonymously, 
-  signInWithCustomToken, 
-  onAuthStateChanged 
-} from 'firebase/auth';
-import { 
-  Heart, 
-  MessageCircle, 
-  Cloud, 
-  Send, 
-  Mic,
-  Smile,
-  Play,
-  Pause,
-  CheckCheck,
-  Lock,
-  Sparkles,
-  Zap,
-  Sun,
-  Star,
-  Calendar,
-  Coffee,
-  Ghost,
-  Wind,
-  Flame,
-  User,
-  Anchor,
-  Compass,
-  Trophy,
-  Activity,
-  Moon,
-  Clock,
-  Infinity as InfinityIcon
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sunahh</title>
 
-// --- CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyBxm9XNECnnua2ygeOSfQUQAoon8VBabgQ",
-  authDomain: "sunahh-43bb8.firebaseapp.com",
-  projectId: "sunahh-43bb8",
-  storageBucket: "sunahh-43bb8.appspot.com",
-};
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = 'sunahh-pro';
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --primary:#6c8cff;
+  --secondary:#ff9fcf;
+  --text:#1e2433;
+  --muted:#7a8092;
+  --border:#e5e8f2;
+}
+body{
+  height:100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background:linear-gradient(180deg,#f6f8ff,#eef2ff);
+  display:flex;justify-content:center;align-items:center;
+  color:var(--text)
+}
+#app{
+  width:100%;max-width:420px;height:100vh;
+  background:var(--card);display:flex;flex-direction:column
+}
+@media(min-width:900px){
+  #app{max-width:1100px;height:88vh;border-radius:26px;overflow:hidden;box-shadow:0 40px 120px rgba(30,40,90,.12)}
+}
+header{padding:18px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+header .title{font-weight:600;font-size:17px}
+header .status{font-size:12px;color:var(--muted)}
+#chat{flex:1;padding:18px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.msg{max-width:70%;padding:14px 18px;border-radius:22px;font-size:14px;line-height:1.55}
+.me{align-self:flex-end;background:linear-gradient(135deg,#6c8cff,#8fa6ff);color:white}
+.other{align-self:flex-start;background:linear-gradient(135deg,#ff9fcf,#ffc6df);color:white}
+.meta{margin-top:6px;font-size:10px;opacity:.7;text-align:right}
+#controls{padding:14px 16px;display:flex;gap:10px;border-top:1px solid var(--border);align-items:center}
+#controls .iconBtn{border:none;background:transparent;font-size:18px;cursor:pointer}
+#controls input{flex:1;border:1px solid var(--border);padding:14px 16px;border-radius:20px;font-size:14px}
+#controls .sendBtn{padding:0 22px;border:none;border-radius:20px;background:linear-gradient(135deg,#6c8cff,#8fa6ff);color:white;font-weight:600}
+.page{position:fixed;inset:0;background:#f6f8ff;display:none;flex-direction:column;z-index:10}
+.page header{background:white;border-bottom:1px solid var(--border);padding:12px}
+.photo{width:100%;border-radius:18px;margin-bottom:12px}
+</style>
+</head>
+<body>
 
-// --- PERSONALIZATION ---
-const ANNIVERSARY = new Date('2024-11-03'); 
+<div id="app">
+  <header>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div class="title">Sunahh</div>
+      <div class="status" id="onlineStatus">connecting…</div>
+      <div class="status" id="topInfo">🌡 --°C · 🔋 --%</div>
+    </div>
+  </header>
 
-const MOODS = [
-  { id: 'happy', icon: '✨', label: 'Radiant', bg: 'from-amber-50 via-white to-orange-50', color: 'text-amber-600' },
-  { id: 'calm', icon: '🍃', label: 'Peaceful', bg: 'from-emerald-50 via-white to-teal-50', color: 'text-emerald-600' },
-  { id: 'cozy', icon: '☕', label: 'Warm', bg: 'from-orange-50 via-white to-rose-50', color: 'text-orange-600' },
-  { id: 'sleepy', icon: '☁️', label: 'Dreamy', bg: 'from-slate-100 via-white to-indigo-100', color: 'text-slate-600' },
-  { id: 'missing', icon: '💜', label: 'Longing', bg: 'from-purple-50 via-white to-fuchsia-50', color: 'text-purple-600' },
-];
+  <div id="chat"></div>
 
-const App = () => {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [partner, setPartner] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [moments, setMoments] = useState([]);
-  const [view, setView] = useState('home'); 
-  const [isPressing, setIsPressing] = useState(false);
-  const [inputMsg, setInputMsg] = useState('');
-  const [myMood, setMyMood] = useState('happy');
-  const [isRecording, setIsRecording] = useState(false);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
-  const [permissionError, setPermissionError] = useState(false);
-  const [sharedPromise, setSharedPromise] = useState("Holding space for us...");
+  <div id="controls">
+    <button class="iconBtn" id="voiceBtn">🎤</button>
+    <button class="iconBtn" id="openPhotos">📷</button>
+    <button class="iconBtn" id="openYT">▶️</button>
+    <input id="msgInput" placeholder="say something warm…" />
+    <button class="sendBtn" id="send">Send</button>
+  </div>
+</div>
 
-  const messagesEndRef = useRef(null);
-  const mediaRecorder = useRef(null);
-  const audioChunks = useRef([]);
+<div id="ytPage" class="page">
+  <header><button onclick="ytPage.style.display='none'">← back</button></header>
+  <div style="padding:14px;display:flex;gap:10px">
+    <input id="ytInput" placeholder="Paste YouTube link…" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border)" />
+    <button id="sendYT" style="padding:0 16px;border:none;border-radius:12px;background:var(--primary);color:white">Play</button>
+  </div>
+  <iframe id="ytFrame" style="width:100%;flex:1;border:none" allow="autoplay"></iframe>
+</div>
 
-  // Get current user from URL hash
-  const myId = useMemo(() => {
-    const hash = window.location.hash.replace('#', '').toLowerCase();
-    return hash === 'abhishek' ? 'abhishek' : 'sana';
-  }, []);
-  
-  const partnerId = myId === 'abhishek' ? 'sana' : 'abhishek';
-  const myName = myId === 'abhishek' ? 'Abhishek' : 'Sana';
-  const partnerName = partnerId === 'abhishek' ? 'Abhishek' : 'Sana';
-  const partnerNickname = partnerId === 'abhishek' ? 'My Sun' : 'My Moon';
+<div id="photoPage" class="page">
+  <header><button onclick="photoPage.style.display='none'">← back</button></header>
+  <input type="file" id="photoInput" accept="image/*" />
+  <div id="photoFeed" style="padding:14px"></div>
+</div>
 
-  // --- CALCULATIONS ---
-  const daysTogether = useMemo(() => {
-    return Math.floor(Math.abs(new Date() - ANNIVERSARY) / (1000 * 60 * 60 * 24));
-  }, []);
+<script>
+(function(){
+  const uid = (location.hash.replace('#','').toLowerCase() || 'abhishek');
+  const other = uid === 'abhishek' ? 'sana' : 'abhishek';
 
-  const nextMonthversary = useMemo(() => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const nextDate = new Date(today.getFullYear(), today.getMonth() + (today.getDate() >= 3 ? 1 : 0), 3);
-    const diff = nextDate - today;
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  }, []);
+  firebase.initializeApp({
+    apiKey:"AIzaSyBxm9XNECnnua2ygeOSfQUQAoon8VBabgQ",
+    databaseURL:"https://sunahh-43bb8-default-rtdb.firebaseio.com",
+    storageBucket:"sunahh-43bb8.appspot.com"
+  });
 
-  // --- AUTH ---
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        setUser({ uid: 'session-' + myId, isAnonymous: true });
-      }
-    };
-    initAuth();
-    const unsubAuth = onAuthStateChanged(auth, (u) => u && setUser(u));
-    return () => unsubAuth();
-  }, [myId]);
+  const db = firebase.database();
+  const storage = firebase.storage();
+  const root = db.ref('sunahh');
+  const me = root.child('users/' + uid);
+  const partner = root.child('users/' + other);
 
-  // --- SYNC ---
-  useEffect(() => {
-    if (!user) return;
+  setInterval(() => me.update({ online:true, last:Date.now() }), 4000);
+  window.addEventListener('beforeunload', () => me.update({ online:false, last:Date.now() }));
 
-    const unsubPartner = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'presence', partnerId), (doc) => {
-      if (doc.exists()) setPartner(doc.data());
+  partner.on('value', s => {
+    const d = s.val(); if(!d) return;
+    if(d.online){ onlineStatus.textContent = 'online'; }
+    else if(d.last){
+      const mins = Math.floor((Date.now()-d.last)/60000);
+      onlineStatus.textContent = mins <= 1 ? 'last seen just now' : `last seen ${mins} min ago`;
+    }
+    topInfo.textContent = `🌡 ${d.temp||'--°C'} · 🔋 ${d.battery!=null?d.battery+'%':'--%'}`;
+  });
+
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=28.61&longitude=77.20&current_weather=true')
+    .then(r=>r.json()).then(d=> me.update({ temp:d.current_weather.temperature+'°C' }));
+
+  if(navigator.getBattery){
+    navigator.getBattery().then(b=>{
+      const upd=()=> me.update({ battery:Math.round(b.level*100) });
+      upd(); b.onlevelchange = upd;
     });
+  }
 
-    const unsubMsgs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), (snap) => {
-      const msgs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      msgs.sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-      setMessages(msgs);
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-    }, (err) => err.code === 'permission-denied' && setPermissionError(true));
+  root.child('messages').limitToLast(200).on('child_added', s => {
+    const m = s.val(); const key = s.key;
+    const div = document.createElement('div');
+    div.className = 'msg ' + (m.from === uid ? 'me' : 'other');
 
-    const unsubMoments = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'moments'), (snap) => {
-      const mms = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      mms.sort((a,b) => (b.savedAt?.seconds || 0) - (a.savedAt?.seconds || 0));
-      setMoments(mms);
-    });
+    if(m.type === 'voice'){
+      div.innerHTML = `<audio controls src="${m.url}" style="width:100%"></audio><div class="meta">voice note</div>`;
+    } else {
+      const meta = m.from === uid
+        ? `<div class='meta' id='seen-${key}'>${m.seen?'seen':'sent'}</div>`
+        : `<div class='meta'>${new Date(m.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>`;
+      div.innerHTML = `${m.text}${meta}`;
+    }
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
 
-    const unsubPromise = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'global', 'promise'), (d) => {
-      if(d.exists()) setSharedPromise(d.data().text);
-    });
-
-    setTimeout(() => setLoading(false), 1000);
-    return () => { 
-      unsubPartner(); 
-      unsubMsgs(); 
-      unsubMoments(); 
-      unsubPromise(); 
-    };
-  }, [user, partnerId]);
-
-  // --- PRESENCE WRITER ---
-  useEffect(() => {
-    if (!user) return;
-    const interval = setInterval(async () => {
-      try {
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'presence', myId), {
-          uid: user.uid,
-          lastSeen: serverTimestamp(),
-          isPressing,
-          mood: myMood,
-          id: myId,
-          isTyping: inputMsg.length > 0,
-          currentView: view
-        }, { merge: true });
-      } catch (e) {}
-    }, 2500);
-    return () => clearInterval(interval);
-  }, [user, isPressing, myMood, inputMsg, myId, view]);
-
-  // --- ACTIONS ---
-  const handleSendMessage = async (text = inputMsg) => {
-    if (!text.trim()) return;
-    setInputMsg('');
-    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-      text, sender: myId, timestamp: serverTimestamp()
-    });
-  };
-
-  const updatePromise = async () => {
-    const newP = prompt("Set a promise for us today:", sharedPromise);
-    if(newP) {
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'global', 'promise'), {
-        text: newP, updatedBy: myId, timestamp: serverTimestamp()
+    if(m.from !== uid && m.type !== 'voice'){
+      root.child('messages/'+key).update({ seen:true });
+    }
+    if(m.from === uid && m.type !== 'voice'){
+      root.child('messages/'+key+'/seen').on('value', snap=>{
+        if(snap.val()){
+          const el=document.getElementById('seen-'+key);
+          if(el) el.textContent='seen';
+        }
       });
+    }
+  });
+
+  function sendMessage(){
+    const t = msgInput.value.trim();
+    if(!t) return;
+    root.child('messages').push({ from:uid, text:t, time:Date.now(), seen:false });
+    msgInput.value='';
+  }
+  send.onclick = sendMessage;
+  msgInput.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); sendMessage(); }
+  });
+
+  let mediaRecorder; let audioChunks=[];
+  voiceBtn.onclick = async ()=>{
+    if(!mediaRecorder){
+      const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e=> audioChunks.push(e.data);
+      mediaRecorder.onstop = ()=>{
+        const blob = new Blob(audioChunks,{ type:'audio/webm' });
+        audioChunks=[];
+        const ref = storage.ref('voices/'+Date.now()+'.webm');
+        ref.put(blob).then(()=>ref.getDownloadURL()).then(url=>{
+          root.child('messages').push({ from:uid, type:'voice', url, time:Date.now() });
+        });
+      };
+    }
+    if(mediaRecorder.state==='inactive'){
+      mediaRecorder.start(); voiceBtn.textContent='⏹️';
+    } else {
+      mediaRecorder.stop(); voiceBtn.textContent='🎤';
     }
   };
 
-  const sparkMoment = async (msg) => {
-    if (navigator.vibrate) navigator.vibrate(40);
-    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'moments'), {
-      text: msg.text, sender: msg.sender, savedAt: serverTimestamp()
-    });
+  openPhotos.onclick = ()=> photoPage.style.display='flex';
+  photoInput.onchange = e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const ref=storage.ref('photos/'+Date.now()+f.name);
+    ref.put(f).then(()=>ref.getDownloadURL()).then(url=> root.child('photos').push({ url }));
   };
+  root.child('photos').limitToLast(20).on('child_added', s=>{
+    const img=document.createElement('img');
+    img.src=s.val().url;
+    img.className='photo';
+    photoFeed.prepend(img);
+  });
 
-  // --- VOICE ---
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
-      audioChunks.current = [];
-      mediaRecorder.current.ondataavailable = (e) => audioChunks.current.push(e.data);
-      mediaRecorder.current.onstop = handleSendVoice;
-      mediaRecorder.current.start();
-      setIsRecording(true);
-      if(navigator.vibrate) navigator.vibrate(60);
-    } catch (err) { alert("Mic required for voice whispers."); }
+  openYT.onclick = ()=> ytPage.style.display='flex';
+  sendYT.onclick = ()=>{
+    const url = ytInput.value.trim(); if(!url) return;
+    const id = (url.match(/v=([^&]+)/)||url.match(/youtu.be\/([^?]+)/))?.[1];
+    if(!id) return;
+    root.child('yt').set({ id, by: uid, time: Date.now() });
+    ytInput.value='';
   };
-
-  const stopRecording = () => {
-    if (mediaRecorder.current && isRecording) {
-      mediaRecorder.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const handleSendVoice = async () => {
-    if (audioChunks.current.length === 0) return;
-    const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
-    const reader = new FileReader();
-    reader.readAsDataURL(audioBlob);
-    reader.onloadend = async () => {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-        audio: reader.result, sender: myId, timestamp: serverTimestamp()
-      });
-    };
-  };
-
-  const playVoice = (audioBase64, msgId) => {
-    if (currentlyPlaying === msgId) return;
-    const audio = new Audio(audioBase64);
-    setCurrentlyPlaying(msgId);
-    audio.play();
-    audio.onended = () => setCurrentlyPlaying(null);
-  };
-
-  // --- UI HELPERS ---
-  const partnerMoodData = useMemo(() => MOODS.find(m => m.id === partner?.mood) || MOODS[0], [partner?.mood]);
-  const bothPressing = isPressing && partner?.isPressing;
-  const partnerOnline = partner?.lastSeen && (Date.now() - partner.lastSeen.seconds * 1000 < 60000);
-
-  if (permissionError) return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-slate-50 text-center font-sans">
-      <Lock size={48} className="text-amber-400 mb-6" />
-      <h1 className="text-xl font-bold mb-2">Locked</h1>
-      <p className="text-slate-400 mb-8 text-sm">Please set Firestore Rules to "if true" to unlock your world.</p>
-      <button onClick={() => window.location.reload()} className="bg-sky-400 text-white px-8 py-3 rounded-2xl font-bold shadow-xl">Refresh</button>
-    </div>
-  );
-
-  if (loading) return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[100] font-sans">
-      <div className="relative mb-8 flex flex-col items-center">
-        <Heart size={60} className="text-sky-100 animate-pulse" fill="currentColor" />
-        <h2 className="text-[18px] font-black uppercase tracking-[1em] text-slate-400 mt-8 ml-4">Sunahh</h2>
-        <p className="mt-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">Since November 3rd, 2024</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className={`fixed inset-0 flex flex-col transition-all duration-1000 font-sans overflow-hidden bg-gradient-to-br ${bothPressing ? 'from-amber-50 via-white to-rose-100' : partnerMoodData.bg}`}>
-      
-      {/* Atmosphere Background */}
-      <div className="absolute inset-0 pointer-events-none opacity-40 overflow-hidden">
-        <div className="absolute top-[-20%] left-[-20%] w-[120%] h-[120%] rounded-full blur-[140px] bg-white animate-soft" />
-      </div>
-
-      {/* Main Responsive Wrapper */}
-      <div className="relative z-10 w-full h-full max-w-5xl mx-auto flex flex-col md:border-x md:border-white/20 md:shadow-2xl bg-white/10 backdrop-blur-md">
-        
-        {/* Sanctuary Header */}
-        <header className="flex-none px-6 py-5 md:py-8 flex justify-between items-center bg-white/20 backdrop-blur-3xl border-b border-white/40 pt-[max(env(safe-area-inset-top),1.5rem)]">
-          <div className="flex items-center gap-5">
-            <div className="relative group cursor-pointer" onClick={() => setView('settings')}>
-              <div className={`w-14 h-14 md:w-16 md:h-16 rounded-[1.8rem] bg-white shadow-xl flex items-center justify-center text-4xl border-2 border-white transition-all duration-700 ${partner?.isPressing ? 'scale-110 rotate-12' : ''}`}>
-                {partnerMoodData.icon}
-              </div>
-              {partnerOnline && (
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 border-[4px] border-white rounded-full shadow-lg" />
-              )}
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="font-serif font-black text-slate-900 text-xl md:text-2xl capitalize tracking-tighter leading-none">
-                {partnerNickname}
-              </h1>
-              <p className={`text-[10px] mt-2 uppercase font-black tracking-[0.3em] transition-colors ${partner?.isTyping ? 'text-sky-500' : 'text-slate-400/60'}`}>
-                {partner?.isTyping ? "Whispering..." : (partnerOnline ? "Right beside you" : "Resting quietly")}
-              </p>
-            </div>
-            <div className="block sm:hidden">
-               <h1 className="font-serif font-black text-slate-900 text-lg tracking-tight capitalize">{partnerName}</h1>
-               <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">{partnerOnline ? "Connected" : "Away"}</p>
-            </div>
-          </div>
-          <div className="flex gap-2.5">
-             <button onClick={() => handleSendMessage(`⭐ Close your eyes, I'm thinking of you...`)} className="w-11 h-11 md:w-12 md:h-12 flex items-center justify-center rounded-2xl bg-white/70 text-rose-300 border border-white shadow-sm active:scale-75 transition-all">
-               <Star size={20} fill="currentColor" />
-             </button>
-             <button onClick={() => setView('settings')} className="w-11 h-11 md:w-12 md:h-12 flex items-center justify-center rounded-2xl bg-white/70 text-slate-400 border border-white shadow-sm active:scale-75 transition-all">
-               <Smile size={22} />
-             </button>
-          </div>
-        </header>
-
-        {/* Viewport Content */}
-        <main className="flex-1 relative overflow-hidden flex flex-col">
-          
-          {/* HOME */}
-          {view === 'home' && (
-            <div className="flex-1 flex flex-col items-center justify-between p-8 md:p-12 pb-20 view-transition overflow-y-auto no-scrollbar">
-              <div className="text-center space-y-4 md:mt-4">
-                <div className="inline-flex items-center gap-3 px-6 py-2.5 bg-white/70 rounded-full border border-white shadow-lg">
-                  <Flame size={16} className="text-orange-400 animate-pulse" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500">Shared Spirit</span>
-                </div>
-                <h2 className="font-serif text-4xl md:text-6xl font-black text-slate-900 tracking-tighter text-center">Hello, {myName}</h2>
-                <p className="text-slate-400 text-sm md:text-base font-serif italic px-6 md:px-24 leading-relaxed max-w-2xl mx-auto text-center">
-                  {partner?.isPressing ? `${partnerName} is holding her screen, reaching for you...` : `We have shared ${daysTogether} beautiful days since November 3rd.`}
-                </p>
-              </div>
-
-              {/* Central Connection Point */}
-              <div className="relative my-8 md:my-10">
-                {bothPressing && <div className="absolute inset-[-140px] rounded-full bg-white blur-[110px] animate-pulse opacity-100" />}
-                <button
-                  onMouseDown={() => setIsPressing(true)} onMouseUp={() => setIsPressing(false)}
-                  onTouchStart={() => setIsPressing(true)} onTouchEnd={() => setIsPressing(false)}
-                  className={`relative w-72 h-72 md:w-96 md:h-96 rounded-[6rem] md:rounded-[8rem] flex flex-col items-center justify-center transition-all duration-1000 active:scale-90 shadow-2xl
-                    ${bothPressing ? 'bg-white shadow-[0_0_180px_rgba(255,255,255,1)] scale-110 rotate-6' : 'bg-white/95 border-2 border-white'}
-                  `}
-                >
-                  <Heart size={bothPressing ? 130 : 100} fill={isPressing || partner?.isPressing ? "#38bdf8" : "none"} 
-                    className={`transition-all duration-1000 ${isPressing || partner?.isPressing ? 'text-sky-400 scale-125' : 'text-slate-100 opacity-40'}`} 
-                  />
-                  <div className="absolute bottom-12 md:bottom-16">
-                     <span className={`text-[11px] md:text-[13px] font-black uppercase tracking-[0.6em] transition-all ${bothPressing ? 'text-sky-400 opacity-100 animate-pulse' : 'text-slate-200 opacity-50'}`}>
-                       {bothPressing ? "Matched" : "Hold for Warmth"}
-                     </span>
-                  </div>
-                </button>
-              </div>
-              
-              <div className="w-full max-w-xl flex flex-col gap-4 md:gap-6">
-                 <div onClick={updatePromise} className="w-full bg-white/70 p-7 rounded-[3rem] border-2 border-white shadow-xl flex flex-col items-center text-center cursor-pointer active:scale-95 transition-all group overflow-hidden">
-                    <Anchor size={18} className="text-sky-300 mb-4 group-hover:rotate-45 transition-transform" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] mb-2">Today's Sacred Vow</p>
-                    <p className="text-base font-serif italic font-black text-slate-800 px-6">"{sharedPromise}"</p>
-                 </div>
-
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                    <div className="bg-white/50 p-6 rounded-[2.8rem] border border-white flex flex-col items-center text-center shadow-sm">
-                      <InfinityIcon size={20} className="text-rose-300 mb-2" />
-                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Our Journey</p>
-                      <p className="text-xl font-black text-slate-800">{daysTogether} Days Together</p>
-                    </div>
-                    <div className="bg-white/50 p-6 rounded-[2.8rem] border border-white flex flex-col items-center text-center shadow-sm">
-                      <Moon size={20} className="text-sky-300 mb-2" />
-                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Next Monthversary</p>
-                      <p className="text-xl font-black text-slate-800">{nextMonthversary} Days left</p>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* CHAT */}
-          {view === 'chat' && (
-            <div className="flex-1 flex flex-col h-full view-transition bg-white/5 backdrop-blur-xl relative">
-              <div className="flex-1 overflow-y-auto px-6 md:px-24 py-12 space-y-12 no-scrollbar">
-                {messages.length === 0 && (
-                  <div className="h-full flex flex-col items-center justify-center opacity-30 text-slate-400">
-                    <Wind size={50} className="mb-8 animate-soft" />
-                    <p className="text-lg font-serif italic text-center px-20 leading-relaxed max-w-md text-slate-600">
-                      Let the whispers begin, {myName}. Your {partnerName} is here.
-                    </p>
-                  </div>
-                )}
-                {messages.map((m) => (
-                  <div key={m.id} className={`flex flex-col ${m.sender === myId ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[85%] md:max-w-[65%] px-7 py-5 shadow-2xl relative group border transition-all duration-700 ${
-                      m.sender === myId 
-                      ? 'bg-slate-900 text-white border-slate-800 rounded-[35px] rounded-br-none' 
-                      : 'bg-white text-slate-800 border-slate-100 rounded-[35px] rounded-bl-none shadow-lg'
-                    }`}>
-                      {m.text && <p className="text-[16px] font-medium leading-relaxed">{m.text}</p>}
-                      {m.audio && (
-                        <button onClick={() => playVoice(m.audio, m.id)} className="flex items-center gap-6 py-2">
-                          <div className={`p-4 rounded-full ${m.sender === myId ? 'bg-white/10' : 'bg-slate-50 border border-slate-100'}`}>
-                            {currentlyPlaying === m.id ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
-                          </div>
-                          <div className="flex gap-2.5 h-10 items-center">
-                            {[1,2,3,4,5,6,7].map(i => <div key={i} className={`w-1 rounded-full bg-current transition-all duration-500 ${currentlyPlaying === m.id ? 'animate-pulse h-10 opacity-70' : 'h-4 opacity-10'}`} style={{animationDelay: `${i*0.08}s`}} />)}
-                          </div>
-                        </button>
-                      )}
-                      <div className="flex items-center justify-between gap-10 mt-5">
-                         <button onClick={() => sparkMoment(m)} className="opacity-0 group-hover:opacity-100 p-2.5 bg-amber-50 rounded-2xl transition-all hover:scale-125 shadow-sm">
-                           <Star size={16} className="text-amber-400" fill="currentColor" />
-                         </button>
-                         <div className="flex items-center gap-2 opacity-30">
-                           <span className="text-[10px] font-black uppercase tracking-widest">
-                             {m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '...'}
-                           </span>
-                           {m.sender === myId && <CheckCheck size={16} strokeWidth={4} />}
-                         </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Chat Input */}
-              <div className="flex-none p-6 md:px-24 bg-white/70 backdrop-blur-3xl border-t border-white/60 flex items-center gap-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
-                <div className="flex-1 bg-white/50 rounded-[3.5rem] border-2 border-slate-100 px-8 py-1 flex items-center gap-3 shadow-inner group focus-within:bg-white transition-all">
-                  <input 
-                    value={inputMsg} 
-                    onChange={e => setInputMsg(e.target.value)} 
-                    onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                    placeholder={`Whisper to ${partnerName}...`} 
-                    className="flex-1 py-5 text-[16px] text-slate-800 bg-transparent outline-none font-bold placeholder:text-slate-300" 
-                  />
-                </div>
-                {inputMsg.length > 0 ? (
-                  <button onClick={() => handleSendMessage()} className="p-6 bg-slate-900 text-white rounded-[2.2rem] shadow-2xl active:scale-90 transition-all border-2 border-slate-800">
-                    <Send size={24} strokeWidth={3} />
-                  </button>
-                ) : (
-                  <button onMouseDown={startRecording} onMouseUp={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
-                    className={`p-6 rounded-[2.2rem] transition-all duration-300 shadow-2xl active:scale-110 border-2 ${isRecording ? 'bg-rose-500 text-white border-rose-400 scale-125' : 'bg-white text-sky-400 border-white shadow-sky-50'}`}
-                  >
-                    <Mic size={28} />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* MEMORY WALL */}
-          {view === 'dreams' && (
-            <div className="flex-1 overflow-y-auto p-10 md:p-24 space-y-16 no-scrollbar view-transition bg-white/5 backdrop-blur-sm">
-              <div className="text-center py-4">
-                <h2 className="font-serif text-6xl font-black text-slate-900 tracking-tighter text-center">Memory Wall</h2>
-                <p className="text-[11px] uppercase font-black tracking-[0.8em] text-slate-400 mt-6 text-center">Captured Forever</p>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 pb-40">
-                {moments.length === 0 && (
-                  <div className="sm:col-span-2 p-24 bg-white/40 rounded-[5rem] border-2 border-white text-center shadow-xl">
-                    <Trophy size={50} className="mx-auto text-sky-200 mb-8" />
-                    <p className="italic text-slate-500 text-lg font-serif px-10 leading-relaxed">No shared sparks yet. Press the star icon in your whispers to pin a memory here.</p>
-                  </div>
-                )}
-                {moments.map((mm, i) => (
-                  <div key={mm.id} style={{ transform: `rotate(${i % 2 === 0 ? '-2deg' : '2deg'})` }} className="p-8 bg-white rounded-lg shadow-2xl border border-slate-50 group hover:rotate-0 hover:scale-105 transition-all duration-700 cursor-pointer">
-                    <div className="aspect-square bg-slate-50/50 mb-8 flex items-center justify-center p-12 border border-slate-100 relative group-hover:bg-white transition-colors">
-                       <Sparkles size={20} className="absolute top-6 right-6 text-amber-400 opacity-20 group-hover:opacity-100 transition-opacity" />
-                       <p className="text-2xl font-serif italic text-slate-800 leading-tight text-center font-black">"{mm.text}"</p>
-                    </div>
-                    <div className="flex justify-between items-end px-4">
-                       <div className="space-y-1 text-left">
-                          <p className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Captured by {mm.sender}</p>
-                          <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">
-                            {mm.savedAt ? new Date(mm.savedAt.seconds * 1000).toLocaleDateString(undefined, {month:'long', day:'numeric', year:'numeric'}) : 'Soul Sync'}
-                          </p>
-                       </div>
-                       <Heart size={24} className="text-rose-100 fill-rose-100 group-hover:scale-150 transition-transform" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* SETTINGS */}
-          {view === 'settings' && (
-            <div className="flex-1 p-10 md:px-32 space-y-14 view-transition pt-16 overflow-y-auto no-scrollbar">
-              <section className="text-center">
-                <h3 className="text-[12px] font-black text-slate-400 uppercase tracking-[0.6em] mb-14">Inner Resonance</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
-                  {MOODS.map(m => (
-                    <button 
-                      key={m.id} onClick={() => setMyMood(m.id)} 
-                      className={`p-10 rounded-[4rem] transition-all active:scale-95 border-2 flex flex-col items-center gap-5 ${
-                        myMood === m.id ? 'bg-white border-white shadow-2xl scale-110' : 'bg-white/20 border-transparent opacity-30 grayscale'
-                      }`}
-                    >
-                      <span className="text-6xl transition-transform group-active:scale-150">{m.icon}</span>
-                      <span className="text-[10px] font-black tracking-widest text-slate-600 uppercase">{m.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-              
-              <section className="bg-white/80 p-14 rounded-[5rem] border-2 border-white shadow-2xl space-y-12 text-center max-w-2xl mx-auto mb-20">
-                <div className="space-y-8">
-                  <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.6em]">Active Guardian</p>
-                  <div className="flex items-center justify-center gap-6 bg-slate-50 p-8 rounded-[2.5rem] shadow-inner border border-slate-100 group">
-                     <div className="w-16 h-16 rounded-[2rem] flex items-center justify-center text-white bg-slate-900 shadow-xl group-hover:scale-110 transition-transform">
-                        <User size={30} />
-                     </div>
-                     <p className="text-2xl font-black text-slate-900 uppercase tracking-[0.4em] capitalize">{myName}</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => window.location.hash = partnerId} 
-                  className="w-full py-8 rounded-[3rem] bg-slate-900 text-white text-[12px] font-black uppercase tracking-[0.6em] shadow-[0_20px_40px_rgba(0,0,0,0.3)] active:scale-95 transition-all"
-                >
-                  Switch Role
-                </button>
-              </section>
-            </div>
-          )}
-        </main>
-
-        {/* Floating Nav */}
-        <nav className="flex-none bg-white/30 backdrop-blur-3xl border-t border-white/60 pt-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] flex justify-around px-12 z-20 md:px-48">
-          {[
-            { id: 'home', icon: Coffee, label: 'Soul' },
-            { id: 'chat', icon: MessageCircle, label: 'Talk' },
-            { id: 'dreams', icon: Cloud, label: 'Wall' }
-          ].map(tab => (
-            <button 
-              key={tab.id} onClick={() => setView(tab.id)} 
-              className={`flex flex-col items-center gap-3 transition-all duration-1000 relative ${view === tab.id ? 'text-slate-950 -translate-y-6' : 'text-slate-300 hover:text-slate-400'}`}
-            >
-              <div className={`p-6 rounded-[2.2rem] transition-all duration-700 ${view === tab.id ? 'bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] scale-125 border border-slate-50' : 'bg-transparent'}`}>
-                <tab.icon size={26} strokeWidth={view === tab.id ? 3.5 : 2} fill={view === tab.id ? (tab.id === 'home' ? '#38bdf8' : 'currentColor') : 'none'} />
-              </div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.5em] transition-all duration-700 ${view === tab.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                {tab.label}
-              </span>
-            </button>
-          ))}
-        </nav>
-      </div>
-    </div>
-  );
-};
-
-export default App;
+  root.child('yt').on('value', s=>{
+    const d=s.val(); if(!d) return;
+    ytFrame.src = `https://www.youtube.com/embed/${d.id}?autoplay=1&rel=0`;
+  });
+})();
+</script>
+</body>
+</html>
